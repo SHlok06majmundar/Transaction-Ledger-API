@@ -10,6 +10,11 @@
  *  - accounts with history cannot be removed   (FK ... ON DELETE RESTRICT)
  */
 export const SCHEMA_SQL = /* sql */ `
+-- "IF NOT EXISTS" is not safe when two processes migrate at once (e.g. two app
+-- instances booting together), so serialise migrations with an advisory lock.
+BEGIN;
+SELECT pg_advisory_xact_lock(726354);
+
 CREATE TABLE IF NOT EXISTS accounts (
   id          UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
   name        TEXT          NOT NULL CHECK (length(btrim(name)) BETWEEN 1 AND 255),
@@ -70,4 +75,6 @@ CREATE OR REPLACE TRIGGER transfers_immutable
 ALTER TABLE accounts     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transfers    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+
+COMMIT;
 `;
