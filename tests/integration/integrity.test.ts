@@ -139,5 +139,8 @@ describe('Misc', () => {
     expect((await api().get('/health')).body).toEqual({ status: 'ok' });
     expect((await api().get('/openapi.json')).body.openapi).toMatch(/^3\./);
     expect((await api().get('/docs/')).status).toBe(200);
+    const root = await api().get('/');
+    expect(root.status).toBe(302);
+    expect(root.headers.location).toBe('/docs');
   });
 });

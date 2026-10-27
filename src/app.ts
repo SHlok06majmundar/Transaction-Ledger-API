@@ -20,6 +20,8 @@ export function createApp(db: Db) {
     res.json({ status: 'ok' });
   });
 
+  app.get('/', (_req, res) => res.redirect('/docs'));
+
   const openapi = YAML.parse(readFileSync(openapiPath, 'utf8'));
   app.get('/openapi.json', (_req, res) => res.json(openapi));
   app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapi));
