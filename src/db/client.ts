@@ -1,3 +1,4 @@
+import { mkdirSync } from 'node:fs';
 import pg from 'pg';
 import { PGlite } from '@electric-sql/pglite';
 import { SCHEMA_SQL } from './schema.js';
@@ -67,6 +68,8 @@ function createPgDb(connectionString: string, ssl?: boolean): Db {
 }
 
 async function createPgliteDb(dataDir?: string): Promise<Db> {
+  // PGlite only creates the last path segment, so a fresh checkout would fail on ./data/pglite.
+  if (dataDir) mkdirSync(dataDir, { recursive: true });
   const db = new PGlite(dataDir);
   await db.waitReady;
 
