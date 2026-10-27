@@ -1,0 +1,71 @@
+### Ledger API — run with the VS Code "REST Client" extension (click "Send Request").
+@base = http://localhost:3000/api
+
+### Create account A
+# @name accountA
+POST {{base}}/accounts
+Content-Type: application/json
+
+{ "name": "Alice" }
+
+### Create account B
+# @name accountB
+POST {{base}}/accounts
+Content-Type: application/json
+
+{ "name": "Bob" }
+
+### Attempt to set a balance (400)
+POST {{base}}/accounts
+Content-Type: application/json
+
+{ "name": "Eve", "balance": 1000000 }
+
+###
+@A = {{accountA.response.body.data.id}}
+@B = {{accountB.response.body.data.id}}
+
+### Credit 100 to A
+POST {{base}}/accounts/{{A}}/transactions
+Content-Type: application/json
+
+{ "type": "credit", "amount": 100, "description": "Opening deposit", "reference_id": "INV-1" }
+
+### Same reference again → 409 DUPLICATE_TRANSACTION
+POST {{base}}/accounts/{{A}}/transactions
+Content-Type: application/json
+
+{ "type": "credit", "amount": 100, "reference_id": "INV-1" }
+
+### Debit 30 from A
+POST {{base}}/accounts/{{A}}/transactions
+Content-Type: application/json
+
+{ "type": "debit", "amount": 30, "description": "Groceries", "reference_id": "POS-1" }
+
+### Overdraft → 422 INSUFFICIENT_BALANCE
+POST {{base}}/accounts/{{A}}/transactions
+Content-Type: application/json
+
+{ "type": "debit", "amount": 1000, "reference_id": "POS-2" }
+
+### Balance of A
+GET {{base}}/accounts/{{A}}/balance
+
+### History of A (all, latest first)
+GET {{base}}/accounts/{{A}}/transactions
+
+### History of A (credits only, page 1, 5 per page)
+GET {{base}}/accounts/{{A}}/transactions?type=credit&page=1&limit=5
+
+### Invalid pagination → 400
+GET {{base}}/accounts/{{A}}/transactions?page=0
+
+### Transfer 20 from A to B
+POST {{base}}/transfers
+Content-Type: application/json
+
+{ "from_account_id": "{{A}}", "to_account_id": "{{B}}", "amount": 20, "reference_id": "TRF-1" }
+
+### Try to delete a transaction → 405 TRANSACTION_IMMUTABLE
+DELETE {{base}}/accounts/{{A}}/transactions/00000000-0000-4000-8000-000000000000
